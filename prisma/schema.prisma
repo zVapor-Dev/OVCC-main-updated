@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model TeamMember {
+  id       Int    @id @default(autoincrement())
+  handle   String @unique
+  username String
+  role     String
+  avatar   String
+  position Int    @default(0)
+}
+
+model TruckersMpFeed {
+  key       String   @id
+  payload   Json
+  updatedAt DateTime @updatedAt
+}

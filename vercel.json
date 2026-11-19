@@ -1,8 +1,0 @@
-{
-  "cleanUrls": true,
-  "rewrites": [
-    { "source": "/event", "destination": "/event.html" },
-    { "source": "/events.php", "destination": "/api/events" },
-    { "source": "/partners.php", "destination": "/api/partners" }
-  ]
-}
