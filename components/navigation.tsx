@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
+import { DiscordIcon } from "./discord-icon";
 import { DISCORD, SITE_NAME } from "@/lib/site";
 
 const links = [
@@ -57,8 +58,9 @@ export default function Navigation() {
             href={DISCORD}
             target="_blank"
             rel="noreferrer"
-            className="hidden rounded-full bg-white px-5 py-2 text-sm font-medium text-black hover:bg-gray-200 sm:block"
+            className="hidden items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-medium text-black hover:bg-gray-200 sm:inline-flex"
           >
+            <DiscordIcon className="h-4 w-4" />
             Discord
           </a>
           <button
@@ -80,7 +82,8 @@ export default function Navigation() {
           className="liquid-glass mt-2 flex flex-col gap-5 rounded-2xl p-6 lg:hidden"
         >
           {navLinks()}
-          <a href={DISCORD} target="_blank" rel="noreferrer">
+          <a href={DISCORD} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2">
+            <DiscordIcon className="h-4 w-4" />
             Discord
           </a>
         </nav>
