@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db, postgresEnabled } from "./db";
 import { type Json, isRow, mergeEvents, partnerList, VTC_ID } from "./truckersmp-data";
 
 class UpstreamError extends Error {
@@ -24,8 +24,8 @@ async function feed<T extends Exclude<Json, null>>(
   minutes: number,
   valid: (payload: Json) => payload is T,
 ) {
-  const table = db().truckersMpFeed;
-  const saved = await table.findUnique({ where: { key: path } });
+  const table = postgresEnabled() ? db().truckersMpFeed : null;
+  const saved = await table?.findUnique({ where: { key: path } });
   const previous = saved && valid(saved.payload) ? { value: saved.payload, time: saved.updatedAt } : null;
   if (previous && Date.now() - previous.time.getTime() < minutes * 60_000) {
     return { value: previous.value, stale: false };
@@ -39,11 +39,13 @@ async function feed<T extends Exclude<Json, null>>(
     console.warn(`Using saved TruckersMP feed: ${path}`, error);
     return { value: previous.value, stale: true };
   }
-  await table.upsert({
-    where: { key: path },
-    create: { key: path, payload: value },
-    update: { payload: value },
-  });
+  if (table) {
+    await table.upsert({
+      where: { key: path },
+      create: { key: path, payload: value },
+      update: { payload: value },
+    });
+  }
   return { value, stale: false };
 }
 
