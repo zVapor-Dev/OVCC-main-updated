@@ -19,5 +19,122 @@ model TeamMember {
 model TruckersMpFeed {
   key       String   @id
   payload   Json
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Feature toggles and admin area. See docs/bot-integration.md.
+// ---------------------------------------------------------------------------
+
+/// One row per feature toggle. A missing row means "off".
+/// Keys: calendar.botEvents, calendar.manualEvents, tmp.autoPanels, tmp.roleSync, tmp.liveData.
+model FeatureToggle {
+  key       String   @id
+  enabled   Boolean  @default(false)
+  updatedAt DateTime @default(now()) @updatedAt
+  updatedBy String?
+}
+
+/// Admin login session. Only the SHA-256 hash of the cookie token is stored.
+model AdminSession {
+  id        String   @id
+  discordId String
+  username  String
+  avatar    String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([discordId])
+}
+
+model AdminAuditLog {
+  id        Int      @id @default(autoincrement())
+  actorId   String
+  actorName String
+  action    String
+  detail    Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Calendar entries that are not TruckersMP events.
+// ---------------------------------------------------------------------------
+
+enum CalendarSource {
+  BOT_PANEL
+  MANUAL
+}
+
+enum CalendarKind {
+  CONVOY
+  INTERNAL_CONVOY
+  MEETING
+  OTHER
+}
+
+/// Written by the bot (source BOT_PANEL, one row per event panel message) and by
+/// the admin page (source MANUAL). Times are UTC.
+model CalendarEntry {
+  id               String         @id @default(dbgenerated("(gen_random_uuid())::text"))
+  source           CalendarSource
+  kind             CalendarKind   @default(CONVOY)
+  title            String
+  description      String?
+  startAt          DateTime
+  endAt            DateTime?
+  location         String?
+  url              String?
+  /// Public entries show on /event. Non-public entries show as "Booked" without details.
+  public           Boolean        @default(true)
+  cancelled        Boolean        @default(false)
+  /// Set when the entry is a panel for a TruckersMP event, so the site does not show it twice.
+  tmpEventId       Int?
+  discordGuildId   String?
+  discordChannelId String?
+  discordMessageId String?        @unique
+  createdBy        String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now()) @updatedAt
+
+  @@index([startAt])
+  @@index([tmpEventId])
+}
+
+// ---------------------------------------------------------------------------
+// TruckersMP integration (bot reads these, admin page edits them).
+// ---------------------------------------------------------------------------
+
+/// TMP event -> Discord event panel. The bot inserts a row after posting a panel,
+/// and skips TMP events that already have one (tmp.autoPanels).
+model TmpEventPanel {
+  tmpEventId Int      @id
+  guildId    String
+  channelId  String
+  messageId  String   @unique
+  createdAt  DateTime @default(now())
+  syncedAt   DateTime @default(now())
+}
+
+/// TMP VTC role -> Discord role, edited on the admin page (tmp.roleSync).
+model TmpRoleMapping {
+  tmpRoleId     Int      @id
+  tmpRoleName   String
+  discordRoleId String
+  updatedAt     DateTime @default(now()) @updatedAt
+}
+
+/// Last known VTC member list, filled by the bot or the site from the TMP API.
+model TmpMember {
+  tmpUserId Int      @id
+  username  String
+  steamId   String?
+  discordId String?
+  roleId    Int?
+  roleName  String?
+  joinedAt  DateTime?
+  syncedAt  DateTime @default(now())
+
+  @@index([discordId])
 }

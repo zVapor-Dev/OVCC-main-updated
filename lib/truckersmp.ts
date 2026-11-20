@@ -89,3 +89,21 @@ export async function getEvent(id: string) {
   }
   return null;
 }
+
+const isObject = (value: Json): value is Exclude<Json, null> => isRow(value);
+const hasList = (key: string) => (value: Json): value is Exclude<Json, null> =>
+  isRow(value) && Array.isArray(value[key]);
+
+/** VTC profile (members_count, verified, recruitment, games, ...). */
+export function getVtc() {
+  return feed(base, 30, isObject);
+}
+
+/** Pass `minutes: 0` to force a fresh fetch; the result is `stale` if TruckersMP was unreachable. */
+export function getVtcMembers(minutes = 15) {
+  return feed(`${base}/members`, minutes, hasList("members"));
+}
+
+export function getVtcRoles(minutes = 30) {
+  return feed(`${base}/roles`, minutes, hasList("roles"));
+}

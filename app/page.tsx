@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { DirectoryMessage, PartnerCards, TeamCards } from "@/components/directory";
 import { FallbackImage } from "@/components/fallback-image";
 import { DiscordIcon } from "@/components/discord-icon";
+import { VtcLive } from "@/components/vtc-live";
 import { DISCORD } from "@/lib/site";
 import {
   ArrowRight,
@@ -166,6 +167,10 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <Suspense fallback={null}>
+          <VtcLive />
+        </Suspense>
 
         <section id="offers" className="relative z-20 bg-black py-28 md:py-40 px-6 border-t border-white/10">
           <div className="max-w-6xl mx-auto">
