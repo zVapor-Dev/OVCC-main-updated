@@ -1,23 +1,113 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Calendar, Clock, ExternalLink, MapPin, Server, X } from "lucide-react";
+import { Calendar, Clock, ExternalLink, MapPin, Server, Tag, X } from "lucide-react";
 import { eventView, isRow, type CalendarEvent } from "@/lib/truckersmp-data";
+import { KIND_LABELS, SOURCE_LABELS, type CalendarItem, type EntryEvent } from "@/lib/calendar";
 import { FallbackImage } from "@/components/fallback-image";
 
 function utc(value: string) {
   return value ? `${value.slice(0, 16).replace("T", " ")} (UTC)` : "TBA";
 }
 
-export default function EventDialog({ event, onClose }: { event: CalendarEvent; onClose: () => void }) {
+/** Opens the dialog as a modal and locks page scroll while it is mounted. */
+function useModal() {
   const dialog = useRef<HTMLDialogElement>(null);
-  const [details, setDetails] = useState(event);
-  const [failed, setFailed] = useState(false);
   useEffect(() => {
     const node = dialog.current!;
     node.showModal();
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    return () => {
+      node.close();
+      document.body.style.overflow = previous;
+    };
+  }, []);
+  return dialog;
+}
+
+export default function EventDialog({ event, onClose }: { event: CalendarItem; onClose: () => void }) {
+  return event.source === "TMP" ? (
+    <TmpEventDialog event={event} onClose={onClose} />
+  ) : (
+    <EntryDialog entry={event} onClose={onClose} />
+  );
+}
+
+function EntryDialog({ entry, onClose }: { entry: EntryEvent; onClose: () => void }) {
+  const dialog = useModal();
+  const fields = entry.booked
+    ? []
+    : [
+        { label: "Kind", value: KIND_LABELS[entry.kind], Icon: Tag },
+        { label: "Location", value: entry.location ?? "TBA", Icon: MapPin },
+        { label: "Start", value: utc(entry.start), Icon: Calendar },
+        ...(entry.end ? [{ label: "End", value: utc(entry.end), Icon: Clock }] : []),
+      ];
+  return (
+    <dialog
+      ref={dialog}
+      aria-labelledby="event-title"
+      onCancel={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="modal-card m-auto w-[calc(100%-2rem)] max-w-2xl p-0 text-white"
+    >
+      <div className="space-y-6 p-6 sm:p-8">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <span className="mb-3 inline-block rounded-full bg-white/5 px-3 py-1 text-xs font-bold text-[#FFBE00]">
+              {SOURCE_LABELS[entry.source]}
+            </span>
+            <h2 id="event-title" className="text-2xl font-bold sm:text-3xl">
+              {entry.booked ? "Booked" : entry.title}
+            </h2>
+          </div>
+          <button autoFocus aria-label="Close event details" onClick={onClose} className="rounded-full bg-black/70 p-2">
+            <X size={20} />
+          </button>
+        </div>
+        {entry.booked ? (
+          <p className="text-sm text-white/60">This is an internal booking. No details are public.</p>
+        ) : (
+          <>
+            <dl className="grid gap-4 sm:grid-cols-2">
+              {fields.map(({ label, value, Icon }) => (
+                <div key={label} className="flex gap-3 rounded-2xl border border-white/5 bg-[#1c1b22] p-4">
+                  <Icon className="mt-1 shrink-0 text-[#FFBE00]" size={18} />
+                  <div className="min-w-0">
+                    <dt className="text-[10px] font-bold uppercase text-white/50">{label}</dt>
+                    <dd className="break-words text-sm font-semibold">{value}</dd>
+                  </div>
+                </div>
+              ))}
+            </dl>
+            {entry.description && (
+              <p className="whitespace-pre-line break-words text-sm text-white/80">{entry.description}</p>
+            )}
+            {entry.url && (
+              <a
+                href={entry.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="btn-solid-yellow flex items-center justify-center gap-2 rounded-xl py-3 text-sm"
+              >
+                <ExternalLink size={16} /> More information
+              </a>
+            )}
+          </>
+        )}
+      </div>
+    </dialog>
+  );
+}
+
+function TmpEventDialog({ event, onClose }: { event: CalendarEvent; onClose: () => void }) {
+  const dialog = useModal();
+  const [details, setDetails] = useState(event);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
     const controller = new AbortController();
     async function refresh() {
       try {
@@ -34,11 +124,7 @@ export default function EventDialog({ event, onClose }: { event: CalendarEvent; 
       }
     }
     void refresh();
-    return () => {
-      controller.abort();
-      node.close();
-      document.body.style.overflow = previous;
-    };
+    return () => controller.abort();
   }, [event.id]);
 
   const fields = [

@@ -2,21 +2,30 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { CalendarEvent } from "@/lib/truckersmp-data";
+import type { CalendarItem, EntryToggles } from "@/lib/calendar";
 import EventDialog from "./event-dialog";
 
 const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+/** One colour per source, used on pills and in the legend. */
+const SOURCE_DOT = {
+  TMP: "bg-[#FFBE00]",
+  BOT_PANEL: "bg-sky-400",
+  MANUAL: "bg-emerald-400",
+} as const;
+
 const monthFormat = new Intl.DateTimeFormat("en", { month: "long", timeZone: "UTC" });
 
 export default function Calendar({
   events,
+  sources,
   initialMonth,
 }: {
-  events: CalendarEvent[];
+  events: CalendarItem[];
+  sources: EntryToggles;
   initialMonth: string;
 }) {
   const [month, setMonth] = useState(() => new Date(`${initialMonth}-01T00:00:00Z`));
-  const [selected, select] = useState<CalendarEvent | null>(null);
+  const [selected, select] = useState<CalendarItem | null>(null);
   const year = month.getUTCFullYear(),
     index = month.getUTCMonth();
   const offset = (month.getUTCDay() + 6) % 7;
@@ -64,16 +73,35 @@ export default function Calendar({
                     )}
                   </div>
                   <div className="mt-2 space-y-1">
-                    {bookings.map((event) => (
-                      <button
-                        key={event.id}
-                        title={event.title}
-                        className="event-pill block w-full text-left"
-                        onClick={() => select(event)}
-                      >
-                        <strong className="text-white">{event.start.slice(11, 16)}</strong> {event.title}
-                      </button>
-                    ))}
+                    {bookings.map((event) => {
+                      const time = <strong className="text-white">{event.start.slice(11, 16)}</strong>;
+                      const dot = <i aria-hidden className={`source-dot ${SOURCE_DOT[event.source]}`} />;
+                      if (event.source !== "TMP" && event.booked) {
+                        return (
+                          <span
+                            key={event.id}
+                            title="Booked (internal)"
+                            className="event-pill event-pill-booked flex w-full items-center gap-1"
+                          >
+                            {dot}
+                            {time} Booked
+                          </span>
+                        );
+                      }
+                      return (
+                        <button
+                          key={event.id}
+                          title={event.title}
+                          className="event-pill flex w-full items-center gap-1 text-left"
+                          onClick={() => select(event)}
+                        >
+                          {dot}
+                          <span className="truncate">
+                            {time} {event.title}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -90,6 +118,28 @@ export default function Calendar({
           <i className="h-3 w-3 rounded-full bg-rose-500" />
           Unavailable
         </span>
+        <span className="flex items-center gap-2">
+          <i className={`h-2 w-2 rounded-full ${SOURCE_DOT.TMP}`} />
+          TruckersMP event
+        </span>
+        {sources.botEvents && (
+          <span className="flex items-center gap-2">
+            <i className={`h-2 w-2 rounded-full ${SOURCE_DOT.BOT_PANEL}`} />
+            Discord event
+          </span>
+        )}
+        {sources.manualEvents && (
+          <span className="flex items-center gap-2">
+            <i className={`h-2 w-2 rounded-full ${SOURCE_DOT.MANUAL}`} />
+            Orvion entry
+          </span>
+        )}
+        {(sources.botEvents || sources.manualEvents) && (
+          <span className="flex items-center gap-2">
+            <i className="h-3 w-5 rounded border border-dashed border-white/30" />
+            Booked (internal, no details)
+          </span>
+        )}
         <span>All times UTC</span>
       </div>
       {selected && <EventDialog key={selected.id} event={selected} onClose={() => select(null)} />}
