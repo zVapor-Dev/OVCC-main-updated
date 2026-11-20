@@ -43,7 +43,7 @@ async function EventCalendar() {
           TruckersMP is unavailable. Some bookings are from the last saved calendar.
         </p>
       )}
-      <Calendar events={events} initialMonth={(events[0]?.start ?? new Date().toISOString()).slice(0, 7)} />
+      <Calendar events={events} initialMonth={new Date().toISOString().slice(0, 7)} />
     </>
   );
 }
