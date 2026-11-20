@@ -75,6 +75,26 @@
   transform: translateY(-1px);
 }
 
+.source-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+}
+
+.event-pill-booked {
+  border-style: dashed;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: default;
+}
+.event-pill-booked:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+  transform: none;
+}
+
 .modal-card::backdrop {
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(12px);

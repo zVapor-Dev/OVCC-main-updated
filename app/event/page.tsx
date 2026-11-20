@@ -2,7 +2,9 @@ import { Suspense } from "react";
 import { FallbackImage } from "@/components/fallback-image";
 import { SITE_NAME } from "@/lib/site";
 import { getEvents } from "@/lib/truckersmp";
-import { eventView } from "@/lib/truckersmp-data";
+import { eventView, type CalendarEvent } from "@/lib/truckersmp-data";
+import { mergeCalendar } from "@/lib/calendar";
+import { getCalendarEntries } from "@/lib/calendar-db";
 import Calendar from "./calendar";
 import "./calendar.css";
 
@@ -24,26 +26,40 @@ async function EventCalendar() {
     feed = await getEvents();
   } catch (error) {
     console.error("Event calendar unavailable", error);
+  }
+  const events: CalendarEvent[] = (feed?.response ?? [])
+    .map(eventView)
+    .filter((event) => /^\d{4}-\d{2}-\d{2}/.test(event.start));
+  const { entries, toggles } = await getCalendarEntries(events.map((event) => event.id));
+  if (!feed && entries.length === 0) {
     return (
       <p className="py-16 text-center" role="status">
         The event calendar is unavailable. Please try again later.
       </p>
     );
   }
-  const events = feed.response.map(eventView).filter((event) => /^\d{4}-\d{2}-\d{2}/.test(event.start));
   return (
     <>
-      {feed.partial && (
+      {!feed && (
+        <p role="status" className="mb-4 text-amber-300">
+          TruckersMP is unavailable. TruckersMP bookings are missing from the calendar.
+        </p>
+      )}
+      {feed?.partial && (
         <p role="status" className="mb-4 text-amber-300">
           One TruckersMP feed is unavailable. Some bookings may be missing.
         </p>
       )}
-      {feed.stale && (
+      {feed?.stale && (
         <p role="status" className="mb-4 text-amber-300">
           TruckersMP is unavailable. Some bookings are from the last saved calendar.
         </p>
       )}
-      <Calendar events={events} initialMonth={new Date().toISOString().slice(0, 7)} />
+      <Calendar
+        events={mergeCalendar(events, entries)}
+        sources={toggles}
+        initialMonth={new Date().toISOString().slice(0, 7)}
+      />
     </>
   );
 }
