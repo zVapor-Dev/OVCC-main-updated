@@ -186,7 +186,7 @@ mapped roles. Leave Discord roles that are not in the mapping alone.
 ## VTC members
 
 Table `"TmpMember"`: **the bot reads it and may set `discordId`.** The website fills it from
-`https://api.truckersmp.com/v2/vtc/87827/members` ("Refresh members now" on
+`https://api.truckersmp.com/v2/vtc/87827/members` automatically every 15 minutes while `tmp.roleSync` or `tmp.liveData` is on, and on demand with "Refresh members now" on
 `/admin/truckersmp`); the bot may also refresh it the same way. A refresh upserts every
 current member, keeps `discordId` as it is, and deletes rows for users who left the VTC.
 
