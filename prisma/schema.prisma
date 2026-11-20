@@ -19,7 +19,7 @@ model TeamMember {
 model TruckersMpFeed {
   key       String   @id
   payload   Json
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 // ---------------------------------------------------------------------------
@@ -31,7 +31,7 @@ model TruckersMpFeed {
 model FeatureToggle {
   key       String   @id
   enabled   Boolean  @default(false)
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
   updatedBy String?
 }
 
@@ -77,7 +77,7 @@ enum CalendarKind {
 /// Written by the bot (source BOT_PANEL, one row per event panel message) and by
 /// the admin page (source MANUAL). Times are UTC.
 model CalendarEntry {
-  id               String         @id @default(cuid())
+  id               String         @id @default(dbgenerated("(gen_random_uuid())::text"))
   source           CalendarSource
   kind             CalendarKind   @default(CONVOY)
   title            String
@@ -96,7 +96,7 @@ model CalendarEntry {
   discordMessageId String?        @unique
   createdBy        String?
   createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  updatedAt        DateTime       @default(now()) @updatedAt
 
   @@index([startAt])
   @@index([tmpEventId])
@@ -122,7 +122,7 @@ model TmpRoleMapping {
   tmpRoleId     Int      @id
   tmpRoleName   String
   discordRoleId String
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime @default(now()) @updatedAt
 }
 
 /// Last known VTC member list, filled by the bot or the site from the TMP API.

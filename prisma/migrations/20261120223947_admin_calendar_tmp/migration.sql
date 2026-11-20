@@ -4,11 +4,14 @@ CREATE TYPE "CalendarSource" AS ENUM ('BOT_PANEL', 'MANUAL');
 -- CreateEnum
 CREATE TYPE "CalendarKind" AS ENUM ('CONVOY', 'INTERNAL_CONVOY', 'MEETING', 'OTHER');
 
+-- AlterTable
+ALTER TABLE "TruckersMpFeed" ALTER COLUMN "updatedAt" SET DEFAULT CURRENT_TIMESTAMP;
+
 -- CreateTable
 CREATE TABLE "FeatureToggle" (
     "key" TEXT NOT NULL,
     "enabled" BOOLEAN NOT NULL DEFAULT false,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedBy" TEXT,
 
     CONSTRAINT "FeatureToggle_pkey" PRIMARY KEY ("key")
@@ -40,7 +43,7 @@ CREATE TABLE "AdminAuditLog" (
 
 -- CreateTable
 CREATE TABLE "CalendarEntry" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL DEFAULT (gen_random_uuid())::text,
     "source" "CalendarSource" NOT NULL,
     "kind" "CalendarKind" NOT NULL DEFAULT 'CONVOY',
     "title" TEXT NOT NULL,
@@ -57,7 +60,7 @@ CREATE TABLE "CalendarEntry" (
     "discordMessageId" TEXT,
     "createdBy" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "CalendarEntry_pkey" PRIMARY KEY ("id")
 );
@@ -79,7 +82,7 @@ CREATE TABLE "TmpRoleMapping" (
     "tmpRoleId" INTEGER NOT NULL,
     "tmpRoleName" TEXT NOT NULL,
     "discordRoleId" TEXT NOT NULL,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "TmpRoleMapping_pkey" PRIMARY KEY ("tmpRoleId")
 );
